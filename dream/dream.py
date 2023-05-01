@@ -10,8 +10,8 @@ from tensorflow.keras.models import Sequential, Model
 # from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.optimizers.legacy import Adam ## Apple silicon
 
-from dream_vae.memory import ReplayMemory
-from dream_vae.util import config_class
+from dream.memory import ReplayMemory
+from dream.util import config_class
 
 
 class Dream:
