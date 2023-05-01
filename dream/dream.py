@@ -10,8 +10,8 @@ from tensorflow.keras.models import Sequential, Model
 # from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.optimizers.legacy import Adam ## Apple silicon
 
-from example.dcgan_example.memory import ReplayMemory
-from example.dcgan_example.util import config_class
+from dream_vae.memory import ReplayMemory
+from dream_vae.util import config_class
 
 
 class Dream:
@@ -133,7 +133,7 @@ class Dream:
 
         stream_1 = img_conv(image)
         stream_2 = action_s(action)
-        
+
         print("encoded image shape =", stream_1.shape)
         print("encoded action shape =", stream_2.shape)
 
