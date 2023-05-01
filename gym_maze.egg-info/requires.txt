@@ -1,0 +1,4 @@
+gym
+numpy
+pygame==2.1.2
+scikit-image
