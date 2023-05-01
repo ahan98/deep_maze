@@ -3,11 +3,12 @@ import glob
 import os
 import numpy as np
 #from py_image_stitcher import ImageStitch
-from tensorflow.python.keras import Input
 
-from tensorflow.python.keras.layers import Conv2D, Flatten, Dense, concatenate, Reshape, UpSampling2D
-from tensorflow.python.keras.models import Sequential, Model
-from tensorflow.python.keras.optimizers import Adam
+from tensorflow.keras import Input
+from tensorflow.keras.layers import Conv2D, Flatten, Dense, Concatenate, Reshape, UpSampling2D
+from tensorflow.keras.models import Sequential, Model
+# from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers.legacy import Adam ## Apple silicon
 
 from example.dcgan_example.memory import ReplayMemory
 from example.dcgan_example.util import config_class
@@ -19,6 +20,7 @@ class Dream:
         self.config = config
         self.memory = memory
         self.model = self.build_model() if model is None else model
+        # print("finish Dream model init")
         self.path = path
         os.makedirs(os.path.join(self.path, "models"), exist_ok=True)
 
@@ -54,16 +56,18 @@ class Dream:
 
         samples = self.memory.sample()
         prestates = samples[0]
+        print("prestates.shape =", prestates.shape)
         actions = samples[1]
         actions = [[1 if y == x else 0 for y in range(0, 4)] for x in actions]
 
         rewards = samples[2]
         poststates = samples[3]
+        print("poststates.shape =", poststates.shape)
         terminals = samples[4]
-
+        print("actions.shape =", np.array(actions).shape)
         self.model.fit(
             [np.array(actions), np.array(prestates)],
-            [np.array(poststates)],
+            np.array(poststates),
             epochs=1
         )
 
@@ -107,12 +111,13 @@ class Dream:
 
 
     def build_model(self):
-        state_size = (self.config.screen_width, self.config.screen_height, self.config.screen_dim)
-        action_size = self.config.action_size
+        state_size = (self.config.screen_height, self.config.screen_width, self.config.screen_dim)
+        action_size = (self.config.action_size, )
 
-
-        action = Input(shape=(action_size, ), name="action")
+        action = Input(shape=action_size, name="action")
         image = Input(shape=state_size, name="image")
+        print("input action shape =", action.shape)
+        print("input image shape =", image.shape)
 
         img_conv = Sequential()
         img_conv.add(Conv2D(256, (4, 4), strides=(2, 2), activation="relu", input_shape=state_size))
@@ -123,13 +128,16 @@ class Dream:
         img_conv.add(Dense(64, activation="relu"))
 
         action_s = Sequential()
-        action_s.add(Dense(64, activation="relu", input_shape=(action_size, )))
+        action_s.add(Dense(64, activation="relu", input_shape=action_size))
         action_s.add(Dense(64, activation="relu"))
 
         stream_1 = img_conv(image)
         stream_2 = action_s(action)
+        
+        print("encoded image shape =", stream_1.shape)
+        print("encoded action shape =", stream_2.shape)
 
-        x = concatenate([stream_1, stream_2])
+        x = Concatenate()([stream_1, stream_2])
         x = Dense(128 * 21 * 21, activation="relu")(x)
         x = Reshape((21, 21, 128))(x)
         #x = BatchNormalization(momentum=0.8)(x)
@@ -143,6 +151,7 @@ class Dream:
         #x = BatchNormalization(momentum=0.8)(x)
 
         x = Conv2D(self.config.screen_dim, (3, 3), padding='same', activation="relu")(x)
+        print("output.shape =", x.shape)
 
         model = Model(inputs=[action, image], outputs=[x])
         model.compile(
