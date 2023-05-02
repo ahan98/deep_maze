@@ -7,7 +7,6 @@ from .maze import Maze
 from .pathfinding import dfs
 from .mechanics import TimedPOMDPMaze, POMDPMaze, POMDPLimitedMaze, NormalMaze, TimedPOMDPLimitedMaze
 import os
-import namedtuple
 
 
 class StateType:
