@@ -50,7 +50,7 @@ class MazeEnv(gym.Env):
         # maze grid size
         self.size = np.array([width, height])
         # pygame window size (width = 300, proportional height)
-        self.window_size = self.size * (300 / height)
+        self.window_size = self.size * np.ceil(300 / self.size)
         # size of each tile in pixels
         self.tile_size = self.window_size / self.size
         self.maze = Maze(width=width, height=height, maze_algorithm=maze_generator)
