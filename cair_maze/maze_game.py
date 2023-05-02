@@ -66,8 +66,8 @@ class MazeGame:
         if "DISPLAY" not in os.environ:
             os.environ['SDL_VIDEODRIVER'] = 'dummy'
         # pygame.init()
-        # pygame.display.init()
-        # pygame.font.init()
+        pygame.display.init()
+        pygame.font.init()
         # pygame.display.set_caption("Deep Maze - v2.0")
 
         #############################################################
@@ -92,7 +92,7 @@ class MazeGame:
         #############################################################
         self.window_size = 512  # The size of the PyGame window
         self.clock = pygame.time.Clock()
-        pygame.display.set_mode(screen_size)
+        # pygame.display.set_mode(screen_size)
         self.screen = pygame.display.set_mode(screen_size)#, 0, 32)
         self.surface = pygame.Surface(self.screen.get_size()).convert()
         self.font = pygame.font.SysFont("Arial", size=16)
