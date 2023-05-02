@@ -66,7 +66,7 @@ class MazeGame:
         if "DISPLAY" not in os.environ:
             os.environ['SDL_VIDEODRIVER'] = 'dummy'
         pygame.init()
-        # pygame.display.init()
+        pygame.display.init()
         # pygame.font.init()
         # pygame.display.set_caption("Deep Maze - v2.0")
 
