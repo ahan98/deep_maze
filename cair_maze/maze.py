@@ -1,24 +1,18 @@
-# -*- coding: utf-8 -*-
-import random
 import time
+from typing import Optional
 import numpy as np
 
-from .algorithms import recursive_backtracking, randomized_prim
+from algorithms import recursive_backtracking, randomized_prim
+from gymnasium import spaces
 
 
 class ActionSpace:
-
-    def __init__(self, seed):
-        self.shape = 4
-        self._random = random.Random(x=seed)
-
-    def sample(self):
-        return self._random.randint(0, self.shape)
-
-
-class StateSpace:
-    def __init__(self, game):
-        self.shape = game.grid.shape
+    space = spaces.Discrete(4)
+    # up, down, left, right
+    directions: list[tuple] = [(0, -1), (0, 1), (-1, 0), (1, 0)]
+    actions: list[int] = [0, 1, 2, 3]
+    direction_to_action = dict(zip(directions, actions))
+    action_to_direction = dict(zip(actions, directions))
 
 
 class Maze:
@@ -37,25 +31,59 @@ class Maze:
         self.width = width
         self.height = height
         self.grid = np.zeros((width, height), dtype=np.uint8)
-        self.action_space = ActionSpace(seed=seed_action)
-        self.state_space = StateSpace(self)
+        # self.action_space = ActionSpace(seed=seed_action)
+        # self.state_space = StateSpace(self)
         self.maze_algorithm = maze_algorithm
+        self.reset()
 
+    def legal_cells(self, x: int, y: int) -> list[tuple[int, int]]:
+        cells = []
+        for (dx, dy) in ActionSpace.directions:
+            nxt = (x + dx, y + dy)
+            if self.inbounds(*nxt) and self.grid[nxt] == 0:
+                cells.append(nxt)
+        return cells
+
+    def inbounds(self, x: int, y: int) -> bool:
+        return 0 <= x < self.width and 0 <= y < self.height
+
+    def is_visible(self, cell: tuple[int, int], center: tuple[int, int], radius: int) -> bool:
+        if radius == -1:
+            return True
+
+        return center[0] - radius <= cell[0] <= center[0] + radius and \
+               center[1] - radius <= cell[1] <= center[1] + radius and \
+               self.inbounds(*cell)
+
+    def visible_cells(self, center: tuple[int, int], radius: int) -> list[tuple[int, int]]:
+        if radius == -1:
+            return [(x, y) for x in range(self.width) for y in range(self.height)]
+
+        cells = []
+        for x in range(center[0] - radius, center[0] + radius + 1):
+            for y in range(center[1] - radius, center[1] + radius + 1):
+                if self.inbounds(x, y):
+                    cells.append((x, y))
+        return cells
+
+
+    def reset(self):
         # Generate the maze structure
         self._generate()
+        self.wall_cells: list[tuple[int, int]] = list(zip(*np.where(self.grid == 1)))
+        self.open_cells: list[tuple[int, int]] = list(zip(*np.where(self.grid == 0)))
 
     def _generate(self):
         """
         Generates the maze based on which algorithm was defined in the constructor
         :return: None
         """
-        if self.maze_algorithm == "recursive_backtracking":
-            recursive_backtracking(self.grid)
-        elif self.maze_algorithm == "randomized_prim":
-            randomized_prim(self.grid)
-        elif self.maze_algorithm == "none":
-            pass
-        else:
-            raise Exception("No maze generation algorithm called %s" % self.maze_algorithm)
-
-
+        match self.maze_algorithm:
+            case "recursive_backtracking":
+                recursive_backtracking(self.grid)
+            case "randomized_prim":
+                randomized_prim(self.grid)
+            case None:
+                pass
+            case _:
+                raise Exception("Undefined maze generation algorithm:", self.maze_algorithm)

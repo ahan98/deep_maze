@@ -1,7 +1,8 @@
 from queue import PriorityQueue
+from maze import Maze
 
 
-def dfs(maze_game, start, goal):
+def dfs(maze: Maze, start, goal):
     """
     depth-first-search
     :param maze_game: the GameMaze instance
@@ -10,13 +11,12 @@ def dfs(maze_game, start, goal):
     :return: list containing the path
     """
     stack = [(start, [start])]
-
     possible_path = PriorityQueue()
 
     while stack:
         (vertex, path) = stack.pop()
-        legal_cells = set(maze_game.legal_directions(*vertex)) - set(path)
-
+        # get legal unvisited neighbors
+        legal_cells = set(maze.legal_cells(*vertex)) - set(path)
         for next in legal_cells:
             if next == goal:
                 full_path = path + [next]
