@@ -65,9 +65,9 @@ class MazeGame:
         #############################################################
         if "DISPLAY" not in os.environ:
             os.environ['SDL_VIDEODRIVER'] = 'dummy'
-        # pygame.init()
-        pygame.display.init()
-        pygame.font.init()
+        pygame.init()
+        # pygame.display.init()
+        # pygame.font.init()
         # pygame.display.set_caption("Deep Maze - v2.0")
 
         #############################################################
@@ -93,9 +93,9 @@ class MazeGame:
         self.window_size = 512  # The size of the PyGame window
         self.clock = pygame.time.Clock()
         # pygame.display.set_mode(screen_size)
-        self.screen = pygame.display.set_mode(screen_size)#, 0, 32)
+        # self.screen = pygame.display.set_mode(screen_size)#, 0, 32)
         self.surface = pygame.Surface(self.screen.get_size()).convert()
-        self.font = pygame.font.SysFont("Arial", size=16)
+        # self.font = pygame.font.SysFont("Arial", size=16)
 
         #############################################################
         ##
@@ -267,8 +267,8 @@ class MazeGame:
         #if type not in [StateType.ImageRGB, StateType.ImageGrayScale]:
         self.rectangles = self.sprites.draw(self.surface)
         self.screen.blit(self.surface, (0, 0))
-        pygame.event.pump()
-        pygame.display.update(self.rectangles)
+        # pygame.event.pump()
+        # pygame.display.update(self.rectangles)
         self.clock.tick(4)
         state = self.get_state(type=type)
         # print("rendering state =", state)
@@ -347,7 +347,7 @@ class MazeGame:
         :return:
         """
         try:
-            pygame.display.quit()
+            # pygame.display.quit()
             pygame.quit()
         except:
             pass
