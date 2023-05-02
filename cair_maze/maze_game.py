@@ -266,7 +266,7 @@ class MazeGame:
         """
         #if type not in [StateType.ImageRGB, StateType.ImageGrayScale]:
         self.rectangles = self.sprites.draw(self.surface)
-        self.screen.blit(self.surface, (0, 0))
+        # self.screen.blit(self.surface, (0, 0))
         # pygame.event.pump()
         # pygame.display.update(self.rectangles)
         self.clock.tick(4)
