@@ -7,7 +7,6 @@ from .algorithms import recursive_backtracking, randomized_prim
 
 
 class ActionSpace:
-
     def __init__(self, seed):
         self.shape = 4
         self._random = random.Random(x=seed)
