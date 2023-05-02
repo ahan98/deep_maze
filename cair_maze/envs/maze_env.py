@@ -6,6 +6,7 @@ import pygame
 import gymnasium as gym
 import os
 import matplotlib.pyplot as plt
+import cv2
 
 from IPython.display import clear_output
 from dataclasses import dataclass
@@ -26,13 +27,14 @@ class Color(Enum):
 
 
 @dataclass
-class GameSettings:
+class Settings:
     radius: int = -1
     agent_color: Color = Color.RED
     target_color: Color = Color.GREEN
     fog_color: Color = Color.GRAY
     wall_color: Color = Color.BLACK
     background_color: Color = Color.WHITE
+    image_size: tuple[int, int] = (84, 84)  # size in pixels of image for training
 
 
 class MazeEnv(gym.Env):
@@ -43,7 +45,7 @@ class MazeEnv(gym.Env):
                  height: int = 5,
                  maze_generator: str = "randomized_prim",
                  render_mode: Optional[str] = None,
-                 settings: GameSettings = GameSettings()):
+                 settings: Settings = Settings()):
 
         # maze grid size
         self.size = np.array([width, height])
@@ -81,9 +83,8 @@ class MazeEnv(gym.Env):
 
     def _get_info(self):
         return {
-            "distance": np.linalg.norm(
-                self.agent - self.target, ord=1
-            )
+            "distance": np.linalg.norm(self.agent - self.target, ord=1),
+            "image": cv2.resize(self.rgb_array, dsize=self.settings.image_size)
         }
 
     def reset(self, seed=None, options=None):
@@ -97,10 +98,10 @@ class MazeEnv(gym.Env):
         agent, target = random.sample(self.maze.open_cells, 2)
         self.agent, self.target = np.array(agent), np.array(target)
 
+        self.render()
         observation = self._get_obs()
         info = self._get_info()
 
-        self.render()
         return observation, info
 
     def solve(self):
@@ -124,24 +125,25 @@ class MazeEnv(gym.Env):
 
         # Map the action (element of {0,1,2,3}) to the direction we walk in
         direction = ActionSpace.action_to_direction[action]
-        # We use `np.clip` to make sure we don't leave the grid
-        self.agent = np.clip(
-            self.agent + direction, 0, self.size - 1
-        )
+        nxt = self.agent + direction
+        if self.maze.is_legal(*nxt):
+            self.agent = nxt
+
         # An episode is done iff the agent has reached the target
         terminated = np.array_equal(self.agent, self.target)
         reward = 1 if terminated else 0  # Binary sparse rewards
+
+        self.render()
         observation = self._get_obs()
         info = self._get_info()
 
-        self.render()
-        return observation, reward, terminated, False, info
+        return observation, reward, terminated, info
 
     def render(self):
         """Render updated canvas."""
 
         if self.render_mode not in self.metadata["render_modes"]:
-            return
+            return None
 
         self._update_canvas()
 
@@ -155,14 +157,14 @@ class MazeEnv(gym.Env):
             # The following line will automatically add a delay to keep the framerate stable.
             self.clock.tick(self.metadata["render_fps"])
         else:
-            rgb_array = np.transpose(
+            self.rgb_array = np.transpose(
                 np.array(pygame.surfarray.pixels3d(self.canvas)), axes=(1, 0, 2)
             )
             if self.render_mode == "jupyter":
                 clear_output(wait=True)
-                plt.imshow(rgb_array)
+                plt.imshow(self.rgb_array)
                 plt.show()
-            return rgb_array
+            return self.rgb_array
 
     def _update_canvas(self):
         """Updates canvas based on current game state (maze design and agent position)."""

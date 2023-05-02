@@ -41,9 +41,12 @@ class Maze:
         cells = []
         for (dx, dy) in ActionSpace.directions:
             nxt = (x + dx, y + dy)
-            if self.inbounds(*nxt) and self.grid[nxt] == 0:
+            if self.is_legal(*nxt):
                 cells.append(nxt)
         return cells
+
+    def is_legal(self, x: int, y: int) -> bool:
+        return self.inbounds(x, y) and self.grid[x, y] == 0
 
     def inbounds(self, x: int, y: int) -> bool:
         return 0 <= x < self.width and 0 <= y < self.height
