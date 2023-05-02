@@ -94,7 +94,7 @@ class MazeGame:
         self.clock = pygame.time.Clock()
         # pygame.display.set_mode(screen_size)
         # self.screen = pygame.display.set_mode(screen_size)#, 0, 32)
-        # self.surface = pygame.Surface(self.screen.get_size()).convert()
+        self.surface = pygame.Surface(screen_size).convert()
         # self.font = pygame.font.SysFont("Arial", size=16)
 
         #############################################################
