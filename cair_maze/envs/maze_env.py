@@ -1,9 +1,13 @@
 import random
 from typing import Optional
 import numpy as np
+from numpy._typing import NDArray
 import pygame
 import gymnasium as gym
+import os
+import matplotlib.pyplot as plt
 
+from IPython.display import clear_output
 from dataclasses import dataclass
 from gymnasium import spaces
 from enum import Enum
@@ -32,13 +36,13 @@ class GameSettings:
 
 
 class MazeEnv(gym.Env):
-    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
+    metadata = {"render_modes": ["human", "rgb_array", "jupyter"], "render_fps": 4}
 
     def __init__(self,
                  width: int = 5,
                  height: int = 5,
                  maze_generator: str = "randomized_prim",
-                 render_mode: str = "human",
+                 render_mode: Optional[str] = None,
                  settings: GameSettings = GameSettings()):
 
         # maze grid size
@@ -56,6 +60,8 @@ class MazeEnv(gym.Env):
         })
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]
+        if render_mode != "human":
+            os.environ['SDL_VIDEODRIVER'] = 'dummy'
         self.render_mode = render_mode
 
         """
@@ -81,6 +87,8 @@ class MazeEnv(gym.Env):
         }
 
     def reset(self, seed=None, options=None):
+        """Reset the game state to a random maze and agent/target positions."""
+
         # We need the following line to seed self.np_random
         super().reset(seed=seed)
         # Generate new maze
@@ -92,12 +100,12 @@ class MazeEnv(gym.Env):
         observation = self._get_obs()
         info = self._get_info()
 
-        if self.render_mode == "human":
-            self._render_frame()
-
+        self.render()
         return observation, info
 
     def solve(self):
+        """Return shortest path from agent's current position to target using DFS."""
+
         n_moves, path = dfs(self.maze, tuple(self.agent), tuple(self.target))
         print("path =", path)
         ## skip element 0, since that is agent's current position
@@ -109,6 +117,8 @@ class MazeEnv(gym.Env):
         print("Shortest path took", n_moves, "moves")
 
     def step(self, action=None):
+        """Performs one action for the agent and renders the resulting game state."""
+
         if action is None:
             action = self.action_space.sample()
 
@@ -124,16 +134,38 @@ class MazeEnv(gym.Env):
         observation = self._get_obs()
         info = self._get_info()
 
-        if self.render_mode == "human":
-            self._render_frame()
-
+        self.render()
         return observation, reward, terminated, False, info
 
     def render(self):
-        if self.render_mode == "rgb_array":
-            return self._render_frame()
+        """Render updated canvas."""
 
-    def _render_frame(self):
+        if self.render_mode not in self.metadata["render_modes"]:
+            return
+
+        self._update_canvas()
+
+        # render new canvas
+        if self.render_mode == "human":
+            # The following line copies our drawings from `canvas` to the visible window
+            self.window.blit(self.canvas, self.canvas.get_rect())
+            pygame.event.pump()
+            pygame.display.update()
+            # We need to ensure that human-rendering occurs at the predefined framerate.
+            # The following line will automatically add a delay to keep the framerate stable.
+            self.clock.tick(self.metadata["render_fps"])
+        else:
+            rgb_array = np.transpose(
+                np.array(pygame.surfarray.pixels3d(self.canvas)), axes=(1, 0, 2)
+            )
+            if self.render_mode == "jupyter":
+                clear_output(wait=True)
+                plt.imshow(rgb_array)
+                plt.show()
+            return rgb_array
+
+    def _update_canvas(self):
+        """Updates canvas based on current game state (maze design and agent position)."""
         if self.window is None and self.render_mode == "human":
             pygame.init()
             pygame.display.init()
@@ -143,7 +175,7 @@ class MazeEnv(gym.Env):
             self.clock = pygame.time.Clock()
 
         # redraw canvas
-        canvas = pygame.Surface(tuple(self.window_size))
+        self.canvas = pygame.Surface(tuple(self.window_size))
         for x in range(self.maze.width):
             for y in range(self.maze.height):
                 cell = (x, y)
@@ -160,21 +192,7 @@ class MazeEnv(gym.Env):
                     color = self.settings.wall_color
 
                 tile = pygame.Rect(tuple(self.tile_size * cell), tuple(self.tile_size))
-                pygame.draw.rect(canvas, color.value, tile)
-
-        if self.render_mode == "human":
-            # The following line copies our drawings from `canvas` to the visible window
-            self.window.blit(canvas, canvas.get_rect())
-            pygame.event.pump()
-            pygame.display.update()
-
-            # We need to ensure that human-rendering occurs at the predefined framerate.
-            # The following line will automatically add a delay to keep the framerate stable.
-            self.clock.tick(self.metadata["render_fps"])
-        else:  # rgb_array
-            return np.transpose(
-                np.array(pygame.surfarray.pixels3d(canvas)), axes=(1, 0, 2)
-            )
+                pygame.draw.rect(self.canvas, color.value, tile)
 
     def close(self):
         if self.window is not None:
