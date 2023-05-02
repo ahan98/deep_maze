@@ -7,6 +7,7 @@ from .maze import Maze
 from .pathfinding import dfs
 from .mechanics import TimedPOMDPMaze, POMDPMaze, POMDPLimitedMaze, NormalMaze, TimedPOMDPLimitedMaze
 import os
+import namedtuple
 
 
 class StateType:
@@ -23,13 +24,15 @@ class MazeGame:
     TimedPOMDPMaze = TimedPOMDPMaze
     TimedPOMDPLimitedMaze = TimedPOMDPLimitedMaze
 
-    def __init__(self, maze_size,
+    def __init__(self,
+                 maze_size,
                  screen_size=(640, 480),
+                 colors=None,
                  mechanic=NormalMaze,
                  mechanic_args=None,
-                 colors=None,
-                 options=None
-                 ):
+                 disable_target=False,
+                 algorithm="randomized_prim",
+                 pygame_gui=False):
         """
         MazeGame Constructor that creates a full maze-game environment
         :param maze_size: tuple of w and h value (10, 10)
@@ -43,47 +46,18 @@ class MazeGame:
             floor=(0, 0, 0)
         )
         """
-        #############################################################
-        ##
-        # Input Manipulation
-        ##
-        #############################################################
-        mechanic_args = {} if mechanic_args is None else mechanic_args
-        colors = {} if colors is None else colors
-        self.options = dict(
-            algorithm="randomized_prim",
-            disable_target=False
-        )
-        if options:
-            self.options.update(options)
-
 
         #############################################################
         ##
         # Pygame Initialization
         ##
         #############################################################
-        if "DISPLAY" not in os.environ:
+        if not pygame_gui:
             os.environ['SDL_VIDEODRIVER'] = 'dummy'
         pygame.init()
         pygame.display.init()
         pygame.font.init()
         pygame.display.set_caption("Deep Maze - v2.0")
-
-        #############################################################
-        ##
-        # Game Dimensions & Configuration
-        ##
-        #############################################################
-        self.width, self.height = maze_size
-        self.tile_width, self.tile_height = ceil(screen_size[0] / maze_size[0]), ceil(screen_size[1] / maze_size[1])
-        self.colors = dict(
-            goal=(255, 0, 0),
-            player=(0, 255, 0),
-            wall=(255, 255, 255),
-            floor=(0, 0, 0)
-        )
-        self.colors.update(colors)
 
         #############################################################
         ##
@@ -96,6 +70,21 @@ class MazeGame:
         self.screen = pygame.display.set_mode(screen_size)#, 0, 32)
         self.surface = pygame.Surface(self.screen.get_size()).convert()
         self.font = pygame.font.SysFont("Arial", size=16)
+
+        #############################################################
+        ##
+        # Game Dimensions & Configuration
+        ##
+        #############################################################
+        self.width, self.height = maze_size
+        self.tile_width, self.tile_height = ceil(screen_size[0] / maze_size[0]), ceil(screen_size[1] / maze_size[1])
+        if colors is None:
+            self.colors = dict(
+                goal=(255, 0, 0),
+                player=(0, 255, 0),
+                wall=(255, 255, 255),
+                floor=(0, 0, 0)
+            )
 
         #############################################################
         ##
@@ -120,6 +109,15 @@ class MazeGame:
 
         #############################################################
         ##
+        # Maze Mechanics
+        ##
+        #############################################################
+        if mechanic_args is None:
+            mechanic_args = dict()
+        self.mechanic = mechanic(self, **mechanic_args)
+
+        #############################################################
+        ##
         # Player & Target Definition
         ##
         #############################################################
@@ -127,14 +125,7 @@ class MazeGame:
         self.player_steps = None
         self.terminal = None
 
-        #############################################################
-        ##
-        # Game Mechanics
-        ##
-        #############################################################
-        self.mechanic = mechanic(self, **mechanic_args)
-
-        # Reset the game
+        # Reset game to default start state
         self.reset()
 
     def get_state(self, type=StateType.DEFAULT, resize=None):
@@ -173,7 +164,7 @@ class MazeGame:
         :return: The State
         """
         # Create new maze
-        self.maze = Maze(width=self.width, height=self.height, maze_algorithm=self.options["algorithm"])
+        self.maze = Maze(width=self.width, height=self.height, maze_algorithm=algorithm)
 
         # Update sprite color reflecting the maze state
         for i in range(self.width * self.height):
@@ -185,7 +176,7 @@ class MazeGame:
             sprite.set_color(color)
             sprite.original_color = color
 
-        if self.options["disable_target"]:
+        if disable_target:
             self.player, _ = self.spawn_players()
             self.target = (-1, -1)
         else:
