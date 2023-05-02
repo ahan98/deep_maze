@@ -1,6 +1,8 @@
 from setuptools import setup
 
-setup(name='gym_maze',
-      version='2.0.0',
-      install_requires=['numpy', 'pygame==2.1.2', 'scikit-image'],
-      packages=['cair_maze', 'dream'])
+setup(
+    name="deep_maze",
+    version="0.0.1",
+    install_requires=["gymnasium==0.28.1", "pygame==2.1.2"],
+    packages=["cair_maze", "cair_maze.envs"]
+)

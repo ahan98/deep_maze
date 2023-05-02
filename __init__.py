@@ -1,1 +1,1 @@
-import gym_maze.envs
+import cair_maze.envs

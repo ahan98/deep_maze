@@ -1,9 +1,10 @@
 import time
-from typing import Optional
 import numpy as np
 
-from algorithms import recursive_backtracking, randomized_prim
+from typing import Optional
 from gymnasium import spaces
+
+from .algorithms import recursive_backtracking, randomized_prim
 
 
 class ActionSpace:
@@ -30,7 +31,7 @@ class Maze:
 
         self.width = width
         self.height = height
-        self.grid = np.zeros((width, height), dtype=np.uint8)
+        self.grid = np.zeros((width, height))
         # self.action_space = ActionSpace(seed=seed_action)
         # self.state_space = StateSpace(self)
         self.maze_algorithm = maze_algorithm

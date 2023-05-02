@@ -1,5 +1,6 @@
 from queue import PriorityQueue
-from maze import Maze
+
+from .maze import Maze
 
 
 def dfs(maze: Maze, start, goal):
