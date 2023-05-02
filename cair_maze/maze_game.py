@@ -46,6 +46,11 @@ class MazeGame:
         )
         """
 
+        self._options = {
+            "algorithm": algorithm,
+            "disable_target": disable_target
+        }
+
         #############################################################
         ##
         # Pygame Initialization
@@ -163,7 +168,7 @@ class MazeGame:
         :return: The State
         """
         # Create new maze
-        self.maze = Maze(width=self.width, height=self.height, maze_algorithm=algorithm)
+        self.maze = Maze(width=self.width, height=self.height, maze_algorithm=self._options["algorithm"])
 
         # Update sprite color reflecting the maze state
         for i in range(self.width * self.height):
@@ -175,7 +180,7 @@ class MazeGame:
             sprite.set_color(color)
             sprite.original_color = color
 
-        if disable_target:
+        if self._options["disable_target"]:
             self.player, _ = self.spawn_players()
             self.target = (-1, -1)
         else:
