@@ -29,6 +29,7 @@ class Color(Enum):
 @dataclass
 class Settings:
     radius: int = -1
+    time_limit: float = -1
     agent_color: Color = Color.RED
     target_color: Color = Color.GREEN
     fog_color: Color = Color.GRAY
@@ -135,7 +136,11 @@ class MazeEnv(gym.Env):
         observation = self._get_obs()
         info = self._get_info()
 
-        return observation, reward, terminated, info
+        truncated = False
+        # if self.settings.time_limit > 0:
+        #     truncated = True
+
+        return observation, reward, terminated, truncated, info
 
     def render(self):
         """Updates canvas based on current game state (maze design and agent position)."""
