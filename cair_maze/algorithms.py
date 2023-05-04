@@ -4,7 +4,7 @@ from .types import *
 from .spaces import ActionSpace
 
 
-def randomized_prim(grid: Grid, start: Coord = (0, 0)) -> None:
+def randomized_prim(grid: Grid, start: Coord=(0, 0)) -> None:
     width, height = grid.shape
 
     # Start with a grid filled with walls
@@ -35,7 +35,7 @@ def randomized_prim(grid: Grid, start: Coord = (0, 0)) -> None:
                 frontiers.append(((x, y+1), (x, y+2)))
 
 
-def recursive_backtracking(grid: Grid, start: Optional[Coord] = None):
+def backtracking(grid: Grid, start: Optional[Coord]=None):
     """ https://en.wikipedia.org/wiki/Maze_generation_algorithm """
     width, height = grid.shape
     directions = ActionSpace.directions

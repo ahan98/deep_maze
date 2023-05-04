@@ -17,6 +17,7 @@ from ..pathfinding import dfs
 from ..maze import Maze
 from ..spaces import ActionSpace
 
+
 class Color(Enum):
     BLACK = (0, 0, 0)
     WHITE = (255, 255, 255)
@@ -27,48 +28,39 @@ class Color(Enum):
 
 
 @dataclass
-class Settings:
-    radius = -1
-    time_limit = -1
-    # width/height in pixels of image for training
-    image_size = (84, 84)
-    agent_color = Color.RED
-    target_color = Color.GREEN
-    fog_color = Color.GRAY
-    wall_color = Color.BLACK
-    background_color = Color.WHITE
+class Colors:
+    agent: Color = Color.RED
+    target: Color = Color.GREEN
+    fog: Color = Color.GRAY
+    wall: Color = Color.BLACK
+    background: Color = Color.WHITE
 
 
-# class Canvas:
-#     def __init__(self,
-#                  # window_size: NDArray[Shape["2,"], UInt],
-#                  render_mode: Optional[str] = None) -> None:
-#         self.render_mode = render_mode
-#         # if self.window is None:
-#         #     pygame.init()
-#         #     pygame.display.init()
-#         #     self.window = pygame.display.set_mode(tuple(self.window_size))
+@dataclass
+class MazeOptions:
+    width: int = 5
+    height: int = 5
+    algorithm: Optional[str] = "randomized_prim"
+    render_mode: Optional[str] = None
+    colors: Colors = Colors()
+    image_size: tuple[u_int, u_int] = (84, 84)
+    window_height: u_int = 300
+    radius: Optional[p_int] = None
 
 
 class MazeEnv(gym.Env):
-    metadata = {"render_modes": ["human", "rgb_array", "jupyter"], "render_fps": 4}
+    metadata = {"render_modes": ["window", "jupyter"], "render_fps": 4}
 
-    def __init__(self,
-                 width: int = 5,
-                 height: int = 5,
-                 maze_generator: str = "randomized_prim",
-                 render_mode: Optional[str] = None,
-                 settings: Settings = Settings()):
-
+    def __init__(self, options: MazeOptions=MazeOptions()):
         # maze grid size
-        self.size = np.array([width, height])
+        self.size = np.array([options.width, options.height])
         # set pygame window size by rounding height to largest multiple >= 300,
         # and multiply window width by the same factor to maintain aspect ratio
-        aspect_ratio = int(np.ceil(300 / width))
+        aspect_ratio = int(np.ceil(options.window_height / options.width))
         self.window_size = self.size * aspect_ratio
         # size of each square tile in pixels
         self.tile_size = np.ones(2) * aspect_ratio
-        self.maze = Maze(width=width, height=height, maze_algorithm=maze_generator)
+        self.maze = Maze(width=options.width, height=options.height, algorithm=options.algorithm)
 
         self.action_space = ActionSpace.space
         self.observation_space = spaces.Dict({
@@ -76,10 +68,10 @@ class MazeEnv(gym.Env):
             "target": spaces.Box(np.zeros(2), self.size - 1, shape=(2,), dtype=np.int64)
         })
 
-        assert render_mode is None or render_mode in self.metadata["render_modes"]
-        if render_mode != "human":
+        assert options.render_mode is None or options.render_mode in self.metadata["render_modes"]
+        if options.render_mode != "window":
             os.environ['SDL_VIDEODRIVER'] = 'dummy'
-        self.render_mode = render_mode
+        self.render_mode = options.render_mode
 
         """
         If human-rendering is used, `self.window` will be a reference
@@ -91,7 +83,9 @@ class MazeEnv(gym.Env):
         self.window = None
         self.clock = None
 
-        self.settings = settings
+        self.colors = options.colors
+        self.radius = options.radius
+        self.image_size = options.image_size
 
     def _get_obs(self):
         return {"agent": self.agent, "target": self.target}
@@ -99,10 +93,10 @@ class MazeEnv(gym.Env):
     def _get_info(self):
         return {
             "distance": np.linalg.norm(self.agent - self.target, ord=1),
-            "image": cv2.resize(self.rgb_array, dsize=self.settings.image_size)
+            "image": cv2.resize(self.rgb_array, dsize=self.image_size)
         }
 
-    def reset(self, seed=None, options=None):
+    def reset(self, seed=None, options: Optional[MazeOptions]=None):
         """Reset the game state to a random maze and agent/target positions."""
 
         # We need the following line to seed self.np_random
@@ -123,11 +117,9 @@ class MazeEnv(gym.Env):
         """Return shortest path from agent's current position to target using DFS."""
 
         n_moves, path = dfs(self.maze, self.agent, self.target)
-        print("path =", path)
-        ## skip element 0, since that is agent's current position
+        # skip element 0, since that is agent's current position
         for i in range(1, n_moves + 1):
-            x, y = path[i]
-            direction = (x - self.agent[0], y - self.agent[1])
+            direction = tuple(path[i] - self.agent)
             action = ActionSpace.direction_to_action[direction]
             print("action =", action)
             self.step(action)
@@ -162,7 +154,7 @@ class MazeEnv(gym.Env):
         assert self.render_mode is None or self.render_mode in self.metadata["render_modes"]
 
         # initialize pygame display for human rendering mode
-        if self.render_mode == "human":
+        if self.render_mode == "window":
             if self.window is None:
                 pygame.init()
                 pygame.display.init()
@@ -177,16 +169,16 @@ class MazeEnv(gym.Env):
             for y in range(self.maze.height):
                 cell = (x, y)
 
-                if not self.maze.is_visible(cell, self.agent, self.settings.radius):
-                    color = self.settings.fog_color
+                if not self.maze.is_visible(cell, self.agent, self.radius):
+                    color = self.colors.fog
                 elif np.array_equal(cell, self.target):
-                    color = self.settings.target_color
+                    color = self.colors.target
                 elif np.array_equal(cell, self.agent):
-                    color = self.settings.agent_color
+                    color = self.colors.agent
                 elif self.maze.grid[x, y] == 0:
-                    color = self.settings.background_color
+                    color = self.colors.background
                 else:
-                    color = self.settings.wall_color
+                    color = self.colors.wall
 
                 tile = pygame.Rect(tuple(self.tile_size * cell), tuple(self.tile_size))
                 pygame.draw.rect(canvas, color.value, tile)
@@ -196,7 +188,7 @@ class MazeEnv(gym.Env):
         )
 
         # copy canvas to display
-        if self.render_mode == "human":
+        if self.render_mode == "window":
             # The following line copies our drawings from `canvas` to the visible window
             self.window.blit(canvas, canvas.get_rect())
             pygame.event.pump()

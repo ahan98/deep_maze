@@ -1,6 +1,8 @@
+annotated_types==0.4.0
 gymnasium==0.28.1
 ipython==8.13.1
 matplotlib==3.7.1
+nptyping==2.5.0
 numpy==1.23.0
 opencv_python==4.7.0.72
 pygame==2.1.2

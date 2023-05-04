@@ -1,9 +1,9 @@
 from __future__ import annotations
 from typing import Annotated, Optional, Union
-from nptyping import NDArray, Shape, Int, UInt, Float32, Float64
-from annotated_types import Ge
+from nptyping import NDArray, Shape, UInt, Int, Float32, Float64
+from annotated_types import Ge, Gt
 
-# Real = Union[Int, UInt, Float32, Float64]
-# Natural = Annotated[int, Ge(0)]
+u_int = Annotated[int, Ge(0)]
+p_int = Annotated[int, Gt(0)]
 Grid = NDArray[Shape["*, *"], UInt]
-Coord = tuple[int, int]|NDArray[Shape["2"], Int]
+Coord = tuple[u_int, u_int]|NDArray[Shape["2"], UInt]
