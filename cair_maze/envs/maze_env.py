@@ -1,21 +1,21 @@
+import os
+import cv2
 import random
-from typing import Optional
 import numpy as np
-from numpy._typing import NDArray
+import matplotlib.pyplot as plt
 import pygame
 import gymnasium as gym
-import os
-import matplotlib.pyplot as plt
-import cv2
 
 from IPython.display import clear_output
 from dataclasses import dataclass
 from gymnasium import spaces
 from enum import Enum
+from typing import Optional
 
+from ..types import *
 from ..pathfinding import dfs
-from ..maze import Maze, ActionSpace
-
+from ..maze import Maze
+from ..spaces import ActionSpace
 
 class Color(Enum):
     BLACK = (0, 0, 0)
@@ -28,14 +28,26 @@ class Color(Enum):
 
 @dataclass
 class Settings:
-    radius: int = -1
-    time_limit: float = -1
-    agent_color: Color = Color.RED
-    target_color: Color = Color.GREEN
-    fog_color: Color = Color.GRAY
-    wall_color: Color = Color.BLACK
-    background_color: Color = Color.WHITE
-    image_size: tuple[int, int] = (84, 84)  # size in pixels of image for training
+    radius = -1
+    time_limit = -1
+    # width/height in pixels of image for training
+    image_size = (84, 84)
+    agent_color = Color.RED
+    target_color = Color.GREEN
+    fog_color = Color.GRAY
+    wall_color = Color.BLACK
+    background_color = Color.WHITE
+
+
+# class Canvas:
+#     def __init__(self,
+#                  # window_size: NDArray[Shape["2,"], UInt],
+#                  render_mode: Optional[str] = None) -> None:
+#         self.render_mode = render_mode
+#         # if self.window is None:
+#         #     pygame.init()
+#         #     pygame.display.init()
+#         #     self.window = pygame.display.set_mode(tuple(self.window_size))
 
 
 class MazeEnv(gym.Env):
@@ -52,9 +64,10 @@ class MazeEnv(gym.Env):
         self.size = np.array([width, height])
         # set pygame window size by rounding height to largest multiple >= 300,
         # and multiply window width by the same factor to maintain aspect ratio
-        self.window_size = self.size * np.ceil(300 / height)
-        # size of each tile in pixels
-        self.tile_size = self.window_size / self.size
+        aspect_ratio = int(np.ceil(300 / width))
+        self.window_size = self.size * aspect_ratio
+        # size of each square tile in pixels
+        self.tile_size = np.ones(2) * aspect_ratio
         self.maze = Maze(width=width, height=height, maze_algorithm=maze_generator)
 
         self.action_space = ActionSpace.space
@@ -109,12 +122,13 @@ class MazeEnv(gym.Env):
     def solve(self):
         """Return shortest path from agent's current position to target using DFS."""
 
-        n_moves, path = dfs(self.maze, tuple(self.agent), tuple(self.target))
+        n_moves, path = dfs(self.maze, self.agent, self.target)
         print("path =", path)
         ## skip element 0, since that is agent's current position
         for i in range(1, n_moves + 1):
-            dx, dy = np.array(path[i]) - self.agent
-            action = ActionSpace.direction_to_action[(dx, dy)]
+            x, y = path[i]
+            direction = (x - self.agent[0], y - self.agent[1])
+            action = ActionSpace.direction_to_action[direction]
             print("action =", action)
             self.step(action)
         print("Shortest path took", n_moves, "moves")
@@ -124,13 +138,13 @@ class MazeEnv(gym.Env):
 
         # Map the action (element of {0,1,2,3}) to the direction we walk in
         direction = ActionSpace.action_to_direction[action]
-        nxt = self.agent + direction
-        if self.maze.is_legal(*nxt):
-            self.agent = nxt
+        next_cell = self.agent + direction
+        if self.maze.is_legal(*next_cell):
+            self.agent = next_cell
 
         # An episode is done iff the agent has reached the target
         terminated = np.array_equal(self.agent, self.target)
-        reward = 1 if terminated else 0  # Binary sparse rewards
+        reward = int(terminated)  # Binary sparse rewards
 
         self.render()
         observation = self._get_obs()
@@ -143,10 +157,9 @@ class MazeEnv(gym.Env):
         return observation, reward, terminated, truncated, info
 
     def render(self):
-        """Updates canvas based on current game state (maze design and agent position)."""
+        """ Draw canvas for current game state. """
 
-        if self.render_mode not in self.metadata["render_modes"]:
-            return None
+        assert self.render_mode is None or self.render_mode in self.metadata["render_modes"]
 
         # initialize pygame display for human rendering mode
         if self.render_mode == "human":
@@ -164,19 +177,23 @@ class MazeEnv(gym.Env):
             for y in range(self.maze.height):
                 cell = (x, y)
 
-                if not self.maze.is_visible(cell, tuple(self.agent), self.settings.radius):
+                if not self.maze.is_visible(cell, self.agent, self.settings.radius):
                     color = self.settings.fog_color
                 elif np.array_equal(cell, self.target):
                     color = self.settings.target_color
                 elif np.array_equal(cell, self.agent):
                     color = self.settings.agent_color
-                elif self.maze.grid[cell] == 0:
+                elif self.maze.grid[x, y] == 0:
                     color = self.settings.background_color
                 else:
                     color = self.settings.wall_color
 
                 tile = pygame.Rect(tuple(self.tile_size * cell), tuple(self.tile_size))
                 pygame.draw.rect(canvas, color.value, tile)
+
+        self.rgb_array = np.transpose(
+            np.array(pygame.surfarray.pixels3d(canvas)), axes=(1, 0, 2)
+        )
 
         # copy canvas to display
         if self.render_mode == "human":
@@ -187,11 +204,7 @@ class MazeEnv(gym.Env):
             # We need to ensure that human-rendering occurs at the predefined framerate.
             # The following line will automatically add a delay to keep the framerate stable.
             self.clock.tick(self.metadata["render_fps"])
-        else:
-            self.rgb_array = np.transpose(
-                np.array(pygame.surfarray.pixels3d(canvas)), axes=(1, 0, 2)
-            )
-            if self.render_mode == "jupyter":
+        elif self.render_mode == "jupyter":
                 clear_output(wait=True)
                 plt.imshow(self.rgb_array)
                 plt.show()

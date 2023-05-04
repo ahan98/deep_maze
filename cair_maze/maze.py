@@ -1,3 +1,5 @@
+from .types import *
+from enum import Enum
 import time
 import numpy as np
 
@@ -5,22 +7,14 @@ from typing import Optional
 from gymnasium import spaces
 
 from .algorithms import recursive_backtracking, randomized_prim
-
-
-class ActionSpace:
-    space = spaces.Discrete(4)
-    # up, down, left, right
-    directions: list[tuple] = [(0, -1), (0, 1), (-1, 0), (1, 0)]
-    actions: list[int] = [0, 1, 2, 3]
-    direction_to_action = dict(zip(directions, actions))
-    action_to_direction = dict(zip(actions, directions))
-
+from .spaces import ActionSpace
 
 class Maze:
     """
     Maze Class, Creates a Maze Instance that contains the internal data of the maze.
     """
-    def __init__(self, width=15, height=15, seed_action=time.time(), maze_algorithm="randomized_prim"):
+    def __init__(self, width:int=15, height:int=15, seed_action=time.time(),
+                 maze_algorithm:str="randomized_prim"):
         """
         Maze Instance, Contains maze generator and the data related to it
         :param width: width of the maze in tiles
@@ -31,13 +25,13 @@ class Maze:
 
         self.width = width
         self.height = height
-        self.grid = np.zeros((width, height))
+        self.grid: Grid = np.zeros((width, height), dtype=np.uint)
         # self.action_space = ActionSpace(seed=seed_action)
         # self.state_space = StateSpace(self)
         self.maze_algorithm = maze_algorithm
         self.reset()
 
-    def legal_cells(self, x: int, y: int) -> list[tuple[int, int]]:
+    def legal_cells(self, x: int, y: int) -> list[Coord]:
         cells = []
         for (dx, dy) in ActionSpace.directions:
             nxt = (x + dx, y + dy)
@@ -51,7 +45,7 @@ class Maze:
     def inbounds(self, x: int, y: int) -> bool:
         return 0 <= x < self.width and 0 <= y < self.height
 
-    def is_visible(self, cell: tuple[int, int], center: tuple[int, int], radius: int) -> bool:
+    def is_visible(self, cell: Coord, center: Coord, radius: int) -> bool:
         if radius == -1:
             return True
 
@@ -59,7 +53,7 @@ class Maze:
                center[1] - radius <= cell[1] <= center[1] + radius and \
                self.inbounds(*cell)
 
-    def visible_cells(self, center: tuple[int, int], radius: int) -> list[tuple[int, int]]:
+    def visible_cells(self, center: Coord, radius: int) -> list[Coord]:
         if radius == -1:
             return [(x, y) for x in range(self.width) for y in range(self.height)]
 
@@ -74,8 +68,8 @@ class Maze:
     def reset(self):
         # Generate the maze structure
         self._generate()
-        self.wall_cells: list[tuple[int, int]] = list(zip(*np.where(self.grid == 1)))
-        self.open_cells: list[tuple[int, int]] = list(zip(*np.where(self.grid == 0)))
+        self.wall_cells: list[Coord] = list(zip(*np.where(self.grid == 1)))
+        self.open_cells: list[Coord] = list(zip(*np.where(self.grid == 0)))
 
     def _generate(self):
         """
