@@ -42,15 +42,6 @@ def recursive_backtracking(grid: Grid, start: Optional[Coord] = None):
     width, height = grid.shape
     directions = ActionSpace.directions
 
-    def helper(x: int, y: int):
-        grid[x, y] = 0
-        random.shuffle(directions)
-        for dx, dy in directions:
-            nx, ny = x + 2*dx, y + 2*dy
-            if 0 <= nx < width and 0 <= ny < height and grid[nx, ny] == 1:
-                grid[x + dx, y + dy] = 0
-                helper(nx, ny)
-
     if start is None:
         x = random.randint(0, width - 1)
         y = random.randint(0, height - 1)
@@ -58,4 +49,15 @@ def recursive_backtracking(grid: Grid, start: Optional[Coord] = None):
         x, y = start
 
     grid.fill(1)
-    helper(x, y)
+    cells = [(x, y)]
+    while cells:
+        x, y = cells.pop()
+        grid[x, y] = 0
+        random.shuffle(directions)
+        for dx, dy in directions:
+            nx, ny = x + 2*dx, y + 2*dy
+            if 0 <= nx < width and 0 <= ny < height and grid[nx, ny] == 1:
+                grid[x + dx, y + dy] = 0
+                cells.append((x, y))
+                cells.append((nx, ny))
+                break
