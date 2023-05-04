@@ -1,14 +1,14 @@
 import numpy as np
 
-from queue import PriorityQueue
+from collections import deque
 
 from .types import *
 from .maze import Maze
 
 
-def dfs(maze: Maze, start: Coord, goal: Coord) -> list[Coord]:
+def bfs(maze: Maze, start: Coord, goal: Coord) -> list[Coord]:
     """
-    depth-first-search
+    breadth-first-search
     :param maze_game: the GameMaze instance
     :param start: tuple (x,y) of start position
     :param goal: tuple (x,y) of the goal position
@@ -19,10 +19,10 @@ def dfs(maze: Maze, start: Coord, goal: Coord) -> list[Coord]:
 
     shortest_path = []
 
-    pq = PriorityQueue()
-    pq.put((1, [start]))
-    while pq:
-        length, path = pq.get()
+    q = deque()
+    q.append([start])
+    while q:
+        path = q.popleft()
         x, y = path[-1]
         if x == goal[0] and y == goal[1]:
             shortest_path = path
@@ -34,6 +34,6 @@ def dfs(maze: Maze, start: Coord, goal: Coord) -> list[Coord]:
         for nx, ny in maze.legal_cells(x, y):
             if visited[nx, ny]:
                 continue
-            pq.put((length + 1, path + [(nx, ny)]))
+            q.append(path + [(nx, ny)])
 
     return shortest_path

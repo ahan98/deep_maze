@@ -13,7 +13,7 @@ from enum import Enum
 from typing import Optional
 
 from ..types import *
-from ..pathfinding import dfs
+from ..pathfinding import bfs
 from ..maze import Maze
 from ..spaces import ActionSpace
 
@@ -114,9 +114,9 @@ class MazeEnv(gym.Env):
         return observation, info
 
     def solve(self):
-        """Return shortest path from agent's current position to target using DFS."""
+        """Return shortest path from agent's current position to target using BFS."""
 
-        path = dfs(self.maze, self.agent, self.target)
+        path = bfs(self.maze, self.agent, self.target)
         # skip element 0, since that is agent's current position
         for i in range(1, len(path)):
             direction = tuple(path[i] - self.agent)
