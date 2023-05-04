@@ -116,14 +116,13 @@ class MazeEnv(gym.Env):
     def solve(self):
         """Return shortest path from agent's current position to target using DFS."""
 
-        n_moves, path = dfs(self.maze, self.agent, self.target)
+        path = dfs(self.maze, self.agent, self.target)
         # skip element 0, since that is agent's current position
-        for i in range(1, n_moves + 1):
+        for i in range(1, len(path)):
             direction = tuple(path[i] - self.agent)
             action = ActionSpace.direction_to_action[direction]
-            print("action =", action)
             self.step(action)
-        print("Shortest path took", n_moves, "moves")
+        print("Shortest path took", len(path) - 1, "moves")
 
     def step(self, action):
         """Performs one action for the agent and renders the resulting game state."""
@@ -197,9 +196,9 @@ class MazeEnv(gym.Env):
             # The following line will automatically add a delay to keep the framerate stable.
             self.clock.tick(self.metadata["render_fps"])
         elif self.render_mode == "jupyter":
-                clear_output(wait=True)
-                plt.imshow(self.rgb_array)
-                plt.show()
+            clear_output(wait=True)
+            plt.imshow(self.rgb_array)
+            plt.show()
 
 
     def close(self):

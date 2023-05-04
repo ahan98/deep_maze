@@ -1,10 +1,12 @@
 import numpy as np
+
 from queue import PriorityQueue
+
 from .types import *
 from .maze import Maze
 
 
-def dfs(maze: Maze, start: Coord, goal: Coord):
+def dfs(maze: Maze, start: Coord, goal: Coord) -> list[Coord]:
     """
     depth-first-search
     :param maze_game: the GameMaze instance
@@ -12,24 +14,26 @@ def dfs(maze: Maze, start: Coord, goal: Coord):
     :param goal: tuple (x,y) of the goal position
     :return: list containing the path
     """
-    start = tuple(start)
-    stack = [(start, [start])]
-    possible_path = PriorityQueue()
-    visited = np.zeros_like(maze.grid)
+    visited = np.full(maze.grid.shape, False)
+    visited[start[0], start[1]] = True
 
-    while stack:
-        (vertex, path) = stack.pop()
-        visited[vertex] = 1
+    shortest_path = []
+
+    pq = PriorityQueue()
+    pq.put((1, [start]))
+    while pq:
+        length, path = pq.get()
+        x, y = path[-1]
+        if x == goal[0] and y == goal[1]:
+            shortest_path = path
+            break
+
+        visited[x, y] = True
 
         # get legal unvisited neighbors
-        for next in maze.legal_cells(*vertex):
-            if visited[next]:
+        for nx, ny in maze.legal_cells(x, y):
+            if visited[nx, ny]:
                 continue
-            if np.array_equal(next, goal):
-                full_path = path + [next]
-                length = len(path)
-                possible_path.put((length, full_path))
-            else:
-                stack.append((next, path + [next]))
+            pq.put((length + 1, path + [(nx, ny)]))
 
-    return possible_path.get()
+    return shortest_path
