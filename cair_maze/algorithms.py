@@ -2,7 +2,6 @@ import random
 from typing import Optional
 from .types import *
 from .spaces import ActionSpace
-import numpy as np
 
 
 def randomized_prim(grid: Grid, start: Coord = (0, 0)) -> None:
@@ -37,8 +36,7 @@ def randomized_prim(grid: Grid, start: Coord = (0, 0)) -> None:
 
 
 def recursive_backtracking(grid: Grid, start: Optional[Coord] = None):
-    """ https://stackoverflow.com/a/60535109 """
-
+    """ https://en.wikipedia.org/wiki/Maze_generation_algorithm """
     width, height = grid.shape
     directions = ActionSpace.directions
 
