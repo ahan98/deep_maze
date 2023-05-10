@@ -219,7 +219,7 @@ class MazeEnv(gym.Env):
 
 
 def rgb_to_gray(img):
-
+    print("converting to gray")
     def grayscale(colors):
         """Return grayscale of given color."""
         r, g, b = colors
