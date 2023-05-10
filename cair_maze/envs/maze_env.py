@@ -208,7 +208,7 @@ class MazeEnv(gym.Env):
             self.clock.tick(self.metadata["render_fps"])
         elif self.render_mode == "jupyter":
             clear_output(wait=True)
-            plt.imshow(self.rgb_array)
+            plt.imshow(self.rgb_array, cmap="gray")
             plt.show()
 
 
