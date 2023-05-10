@@ -6,3 +6,4 @@ nptyping==2.5.0
 numpy==1.22.1
 pygame==2.1.2
 setuptools==56.0.0
+cair-maze @ git+https://github.com/ahan98/deep_maze.git@master

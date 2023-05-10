@@ -195,6 +195,7 @@ class MazeEnv(gym.Env):
         self.rgb_array = np.transpose(
             np.array(pygame.surfarray.pixels3d(canvas)), axes=(1, 0, 2)
         )
+        self.rgb_array = rgb_to_gray(self.rgb_array)
 
         # copy canvas to display
         if self.render_mode == "window":
@@ -215,3 +216,22 @@ class MazeEnv(gym.Env):
         if self.window is not None:
             pygame.display.quit()
             pygame.quit()
+
+
+def rgb_to_gray(img):
+    grayImage = np.zeros(img.shape)
+    R = np.array(img[:, :, 0])
+    G = np.array(img[:, :, 1])
+    B = np.array(img[:, :, 2])
+
+    R = (R *.299)
+    G = (G *.587)
+    B = (B *.114)
+
+    Avg = (R+G+B)
+    grayImage = img.copy()
+
+    for i in range(3):
+        grayImage[:,:,i] = Avg
+
+    return grayImage
