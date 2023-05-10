@@ -219,19 +219,11 @@ class MazeEnv(gym.Env):
 
 
 def rgb_to_gray(img):
-    grayImage = np.zeros(img.shape)
-    R = np.array(img[:, :, 0])
-    G = np.array(img[:, :, 1])
-    B = np.array(img[:, :, 2])
 
-    R = (R *.299)
-    G = (G *.587)
-    B = (B *.114)
+    def grayscale(colors):
+        """Return grayscale of given color."""
+        r, g, b = colors
+        return 0.21 * r + 0.72 * g + 0.07 * b
 
-    Avg = (R+G+B)
-    grayImage = img.copy()
-
-    for i in range(3):
-        grayImage[:,:,i] = Avg
-
-    return grayImage
+    gray = np.apply_along_axis(grayscale, 2, img)
+    return gray
