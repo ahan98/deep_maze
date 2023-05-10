@@ -1,5 +1,5 @@
 annotated_types==0.4.0
-gym==0.21
+gym==0.23
 ipython==8.12.1
 matplotlib==3.6.3
 nptyping==2.5.0

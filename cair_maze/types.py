@@ -6,4 +6,4 @@ from annotated_types import Ge, Gt
 u_int = Annotated[int, Ge(0)]
 p_int = Annotated[int, Gt(0)]
 Grid = NDArray[Shape["*, *"], UInt]
-Coord = tuple[u_int, u_int]|NDArray[Shape["2"], UInt]
+Coord = Union[tuple[u_int, u_int], NDArray[Shape["2"], UInt]]
