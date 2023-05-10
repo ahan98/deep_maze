@@ -1,4 +1,5 @@
-from gymnasium import spaces
+from gym import spaces
+# from gymnasium import spaces
 
 
 class ActionSpace:

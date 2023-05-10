@@ -4,11 +4,13 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 import pygame
-import gymnasium as gym
+import gym
+# import gymnasium as gym
 
 from IPython.display import clear_output
 from dataclasses import dataclass
-from gymnasium import spaces
+# from gymnasium import spaces
+from gym import spaces
 from enum import Enum
 from typing import Optional
 
@@ -92,26 +94,32 @@ class MazeEnv(gym.Env):
 
     def _get_info(self):
         return {
-            "distance": np.linalg.norm(self.agent - self.target, ord=1),
-            "image": cv2.resize(self.rgb_array, dsize=self.image_size)
+            "distance": np.linalg.norm(self.agent - self.target, ord=1)
         }
+
+    def rgb(self):
+        return cv2.resize(self.rgb_array, dsize=self.image_size)
 
     def reset(self, seed=None, options: Optional[MazeOptions]=None):
         """Reset the game state to a random maze and agent/target positions."""
 
         # We need the following line to seed self.np_random
-        super().reset(seed=seed)
+        # super().reset(seed=seed)
         # Generate new maze
-        self.maze.reset()
+        self.maze.reset(seed=seed)
         # Randomly choose two distinct non-wall locations for agent and target
-        agent, target = random.sample(self.maze.open_cells, 2)
-        self.agent, self.target = np.array(agent), np.array(target)
+        agent, target = random.Random(seed).sample(self.maze.open_cells, 2)
+        self.agent, self.target = np.array(agent, dtype=np.int64), np.array(target, dtype=np.int64)
 
         self.render()
-        observation = self._get_obs()
-        info = self._get_info()
 
-        return observation, info
+        # observation = self._get_obs()
+        # info = self._get_info()
+        # return observation, info
+
+        # using gym, not gymnasium
+        observation = self._get_obs()
+        return observation
 
     def solve(self):
         """Return shortest path from agent's current position to target using BFS."""
@@ -135,17 +143,19 @@ class MazeEnv(gym.Env):
 
         # An episode is done iff the agent has reached the target
         terminated = np.array_equal(self.agent, self.target)
-        reward = int(terminated)  # Binary sparse rewards
+        reward = 1 if int(terminated) else -0.01
 
         self.render()
         observation = self._get_obs()
         info = self._get_info()
 
-        truncated = False
+        # truncated = False
         # if self.settings.time_limit > 0:
         #     truncated = True
+        # return observation, reward, terminated, truncated, info
 
-        return observation, reward, terminated, truncated, info
+        # using gym, not gymnasium
+        return observation, reward, terminated, info
 
     def render(self):
         """ Draw canvas for current game state. """

@@ -61,23 +61,22 @@ class Maze:
                     cells.append((x, y))
         return cells
 
-    def reset(self):
+    def reset(self, seed=None):
         # Generate the maze structure
-        self._generate()
+        self._generate(seed=seed)
         self.wall_cells: list[Coord] = list(zip(*np.where(self.grid == 1)))
         self.open_cells: list[Coord] = list(zip(*np.where(self.grid == 0)))
 
-    def _generate(self):
+    def _generate(self, seed=None):
         """
         Generates the maze based on which algorithm was defined in the constructor
         :return: None
         """
-        match self.algorithm:
-            case "backtracking":
-                backtracking(self.grid)
-            case "randomized_prim":
-                randomized_prim(self.grid)
-            case None:
-                pass
-            case _:
-                raise Exception("Undefined maze generation algorithm:", self.algorithm)
+        if self.algorithm == "backtracking":
+            backtracking(self.grid, seed=seed)
+        elif self.algorithm == "randomized_prim":
+            backtracking(self.grid, seed=seed)
+        elif self.algorithm is None:
+            pass
+        else:
+            raise Exception("Undefined maze generation algorithm:", self.algorithm)
