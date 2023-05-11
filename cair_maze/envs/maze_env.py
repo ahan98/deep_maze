@@ -195,7 +195,7 @@ class MazeEnv(gym.Env):
         self.rgb_array = np.transpose(
             np.array(pygame.surfarray.pixels3d(canvas)), axes=(1, 0, 2)
         )
-        self.rgb_array = rgb_to_gray(self.rgb_array)
+        # self.rgb_array = rgb_to_gray(self.rgb_array)
 
         # copy canvas to display
         if self.render_mode == "window":
